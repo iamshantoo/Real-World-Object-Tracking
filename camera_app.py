@@ -12,6 +12,10 @@ class CameraApp(QWidget):
         self.setWindowTitle("Live Camera Feed")
         self.setGeometry(100, 100, 640, 480)  # Set the window size to 640 x 480
 
+        # Buffer to store wrist x-coordinates for movement detection
+        self.wrist_x_buffer = []
+        self.buffer_size = 10  # Number of frames to tracks
+
         # Layout
         self.layout = QVBoxLayout()
         self.video_label = QLabel(self)  # QLabel to display video frames
@@ -176,6 +180,27 @@ class CameraApp(QWidget):
                         gesture = "Open Hand"
                     else:
                         gesture = f"{fingers_extended} Fingers Extended"
+                    
+                    # Get the wrist landmark
+                    wrist = hand_landmarks.landmark[self.mp_hands.HandLandmark.WRIST]
+                    wrist_x = int(wrist.x * w)
+
+                    # Add the wrist x-coordinate to the buffer
+                    self.wrist_x_buffer.append(wrist_x)
+                    if len(self.wrist_x_buffer) > self.buffer_size:
+                        self.wrist_x_buffer.pop(0)  # Keep the buffer size fixed
+
+                    # Detect hand movement (oscillation)
+                    if len(self.wrist_x_buffer) == self.buffer_size:
+                        movement_range = max(self.wrist_x_buffer) - min(self.wrist_x_buffer)
+                        if movement_range > 50:  # Threshold for significant movement
+                            hand_state = "Open"  # Ensure the hand is open
+                            if fingers_extended == 5:  # Check if all fingers are extended
+                                gesture = "Hi (Waving)"
+                            else:
+                                gesture = "Moving Hand"
+                        else:
+                            gesture = "Open Hand"
 
                     # Display the hand state and gesture on the frame
                     cv2.putText(frame, f"Hand State: {hand_state}", (25, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
