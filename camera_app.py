@@ -119,9 +119,59 @@ class CameraApp(QWidget):
                     if fingers_extended == 0:
                         gesture = "Fist"
                     elif fingers_extended == 1:
-                        gesture = "Pointing"
+                        # Check if the thumb is extended for Like/Dislike gestures
+                        thumb_tip = hand_landmarks.landmark[self.mp_hands.HandLandmark.THUMB_TIP]
+                        thumb_ip = hand_landmarks.landmark[self.mp_hands.HandLandmark.THUMB_IP]
+                        thumb_mcp = hand_landmarks.landmark[self.mp_hands.HandLandmark.THUMB_MCP]
+
+                        # Convert normalized coordinates to pixel values
+                        thumb_tip_y = int(thumb_tip.y * h)
+                        thumb_ip_y = int(thumb_ip.y * h)
+                        thumb_mcp_y = int(thumb_mcp.y * h)
+
+                        if thumb_tip_y < thumb_ip_y < thumb_mcp_y:  # Thumb pointing up
+                            gesture = "Like (Thumbs Up)"
+                        elif thumb_tip_y > thumb_ip_y > thumb_mcp_y:  # Thumb pointing down
+                            gesture = "Dislike (Thumbs Down)"
+                        else:
+                            gesture = "Pointing"
                     elif fingers_extended == 2:
-                        gesture = "Peace"
+                        # Check if the OK gesture is detected
+                        thumb_tip = hand_landmarks.landmark[self.mp_hands.HandLandmark.THUMB_TIP]
+                        index_tip = hand_landmarks.landmark[self.mp_hands.HandLandmark.INDEX_FINGER_TIP]
+                        middle_tip = hand_landmarks.landmark[self.mp_hands.HandLandmark.MIDDLE_FINGER_TIP]
+                        ring_tip = hand_landmarks.landmark[self.mp_hands.HandLandmark.RING_FINGER_TIP]
+                        pinky_tip = hand_landmarks.landmark[self.mp_hands.HandLandmark.PINKY_TIP]
+
+                        middle_base = hand_landmarks.landmark[self.mp_hands.HandLandmark.MIDDLE_FINGER_MCP]
+                        ring_base = hand_landmarks.landmark[self.mp_hands.HandLandmark.RING_FINGER_MCP]
+                        pinky_base = hand_landmarks.landmark[self.mp_hands.HandLandmark.PINKY_MCP]
+
+                        # Convert normalized coordinates to pixel values
+                        thumb_tip_x, thumb_tip_y = int(thumb_tip.x * w), int(thumb_tip.y * h)
+                        index_tip_x, index_tip_y = int(index_tip.x * w), int(index_tip.y * h)
+
+                        # Calculate the Euclidean distance between thumb tip and index finger tip
+                        distance = np.sqrt((thumb_tip_x - index_tip_x) ** 2 + (thumb_tip_y - index_tip_y) ** 2)
+
+                        # Check if the thumb and index finger tips are close
+                        if distance < 40:
+                            # Check if the other fingers are extended and far from the thumb and index finger
+                            if (
+                                middle_tip.y < middle_base.y and
+                                ring_tip.y < ring_base.y and
+                                pinky_tip.y < pinky_base.y and
+                                abs(middle_tip.x - thumb_tip.x) > 50 and
+                                abs(ring_tip.x - thumb_tip.x) > 50 and
+                                abs(pinky_tip.x - thumb_tip.x) > 50
+                            ):
+                                gesture = "OK Gesture"
+                            else:
+                                gesture = "Two Fingers Extended"
+                        elif index_tip_y < middle_tip.y and abs(index_tip_x - middle_tip.x * w) > 40:
+                            gesture = "Peace (Victory Sign)"
+                        else:
+                            gesture = "Two Fingers Extended"
                     elif fingers_extended == 5:
                         gesture = "Open Hand"
                     else:
