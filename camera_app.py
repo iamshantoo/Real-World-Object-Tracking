@@ -128,8 +128,8 @@ class CameraApp(QWidget):
                         gesture = f"{fingers_extended} Fingers Extended"
 
                     # Display the hand state and gesture on the frame
-                    cv2.putText(frame, f"Hand State: {hand_state}", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
-                    cv2.putText(frame, f"Gesture: {gesture}", (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                    cv2.putText(frame, f"Hand State: {hand_state}", (25, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
+                    cv2.putText(frame, f"Gesture: {gesture}", (25, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
             # Convert frame to RGB for displaying in QLabel
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
