@@ -10,7 +10,7 @@ class CameraApp(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Live Camera Feed")
-        self.setGeometry(100, 100, 640, 480)
+        self.setGeometry(100, 100, 640, 480)  # Set the window size to 640 x 480
 
         # Layout
         self.layout = QVBoxLayout()
@@ -26,6 +26,11 @@ class CameraApp(QWidget):
 
         # OpenCV Video Capture
         self.cap = cv2.VideoCapture(0)  # 0 = default webcam
+
+        # Verify the resolution (use the default resolution provided by the camera)
+        actual_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        actual_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        print(f"Camera resolution: {actual_width} x {actual_height}")
 
         # Timer to update frames
         self.timer = QTimer()
@@ -54,16 +59,77 @@ class CameraApp(QWidget):
                     # Draw hand landmarks on the frame
                     self.mp_draw.draw_landmarks(frame, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
 
-                    # Example: Get the coordinates of the index finger tip (landmark 8)
-                    index_finger_tip = hand_landmarks.landmark[self.mp_hands.HandLandmark.INDEX_FINGER_TIP]
+                    # Get the frame dimensions
                     h, w, _ = frame.shape
-                    cx, cy = int(index_finger_tip.x * w), int(index_finger_tip.y * h)
 
-                    # Draw a circle at the index finger tip
-                    cv2.circle(frame, (cx, cy), 10, (255, 0, 0), -1)
+                    # Define finger tip and base landmarks
+                    finger_tips = [
+                        self.mp_hands.HandLandmark.THUMB_TIP,
+                        self.mp_hands.HandLandmark.INDEX_FINGER_TIP,
+                        self.mp_hands.HandLandmark.MIDDLE_FINGER_TIP,
+                        self.mp_hands.HandLandmark.RING_FINGER_TIP,
+                        self.mp_hands.HandLandmark.PINKY_TIP,
+                    ]
+                    finger_bases = [
+                        self.mp_hands.HandLandmark.THUMB_CMC,
+                        self.mp_hands.HandLandmark.INDEX_FINGER_MCP,
+                        self.mp_hands.HandLandmark.MIDDLE_FINGER_MCP,
+                        self.mp_hands.HandLandmark.RING_FINGER_MCP,
+                        self.mp_hands.HandLandmark.PINKY_MCP,
+                    ]
+                    finger_names = ["Thumb", "Index", "Middle", "Ring", "Pinky"]
 
-                    # Example: Display gesture (e.g., "Index Finger Detected")
-                    cv2.putText(frame, "Index Finger Detected", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                    # Define colors for each finger
+                    finger_colors = [
+                        (255, 0, 0),  # Blue for Thumb
+                        (0, 255, 0),  # Green for Index
+                        (0, 0, 255),  # Red for Middle
+                        (255, 255, 0),  # Cyan for Ring
+                        (255, 0, 255),  # Magenta for Pinky
+                    ]
+
+                    # Count fingers that are extended
+                    fingers_extended = 0
+
+                    for tip, base, name, color in zip(finger_tips, finger_bases, finger_names, finger_colors):
+                        tip_landmark = hand_landmarks.landmark[tip]
+                        base_landmark = hand_landmarks.landmark[base]
+
+                        # Convert normalized coordinates to pixel values
+                        tip_x, tip_y = int(tip_landmark.x * w), int(tip_landmark.y * h)
+                        base_y = int(base_landmark.y * h)
+
+                        # Check if the finger is extended (tip is farther from the palm than the base)
+                        if tip_y < base_y:  # Lower y-coordinate means higher position
+                            fingers_extended += 1
+
+                            # Display the finger name and draw a circle at the fingertip
+                            cv2.putText(frame, name, (tip_x, tip_y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+                            cv2.circle(frame, (tip_x, tip_y), 10, color, -1)  # Draw a circle at the fingertip
+
+                    # Determine the hand state
+                    if fingers_extended == 0:
+                        hand_state = "Closed (Fist)"
+                    elif fingers_extended == 5:
+                        hand_state = "Open"
+                    else:
+                        hand_state = "Partially Open"
+
+                    # Recognize gestures based on the number of fingers extended
+                    if fingers_extended == 0:
+                        gesture = "Fist"
+                    elif fingers_extended == 1:
+                        gesture = "Pointing"
+                    elif fingers_extended == 2:
+                        gesture = "Peace"
+                    elif fingers_extended == 5:
+                        gesture = "Open Hand"
+                    else:
+                        gesture = f"{fingers_extended} Fingers Extended"
+
+                    # Display the hand state and gesture on the frame
+                    cv2.putText(frame, f"Hand State: {hand_state}", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
+                    cv2.putText(frame, f"Gesture: {gesture}", (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
             # Convert frame to RGB for displaying in QLabel
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
