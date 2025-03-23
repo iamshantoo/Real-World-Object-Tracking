@@ -12,8 +12,9 @@ class GestureTracking:
                                          min_tracking_confidence=0.5)
         self.mp_draw = mp.solutions.drawing_utils
 
-        # Buffer to store wrist x-coordinates for movement detection
-        self.wrist_x_buffer = []
+        # Buffers to store x-coordinates for movement detection
+        self.index_x_buffer = []  # For swipe detection
+        self.wrist_x_buffer = []  # For waving detection
         self.buffer_size = 10  # Number of frames to track
 
     def process_frame(self, frame, results):
@@ -105,47 +106,38 @@ class GestureTracking:
                         gesture = "Dislike (Thumbs Down)"
                     else:
                         gesture = "Pointing"
-                elif fingers_extended == 2:
-                    # Detect Peace (Victory Sign) and OK Gesture
-                    thumb_tip = hand_landmarks.landmark[self.mp_hands.HandLandmark.THUMB_TIP]
-                    index_tip = hand_landmarks.landmark[self.mp_hands.HandLandmark.INDEX_FINGER_TIP]
-                    middle_tip = hand_landmarks.landmark[self.mp_hands.HandLandmark.MIDDLE_FINGER_TIP]
-                    ring_tip = hand_landmarks.landmark[self.mp_hands.HandLandmark.RING_FINGER_TIP]
-                    pinky_tip = hand_landmarks.landmark[self.mp_hands.HandLandmark.PINKY_TIP]
-
-                    middle_base = hand_landmarks.landmark[self.mp_hands.HandLandmark.MIDDLE_FINGER_MCP]
-                    ring_base = hand_landmarks.landmark[self.mp_hands.HandLandmark.RING_FINGER_MCP]
-                    pinky_base = hand_landmarks.landmark[self.mp_hands.HandLandmark.PINKY_MCP]
-
-                    thumb_tip_x, thumb_tip_y = int(thumb_tip.x * w), int(thumb_tip.y * h)
-                    index_tip_x, index_tip_y = int(index_tip.x * w), int(index_tip.y * h)
-
-                    # Calculate the Euclidean distance between thumb tip and index finger tip
-                    distance = np.sqrt((thumb_tip_x - index_tip_x) ** 2 + (thumb_tip_y - index_tip_y) ** 2)
-
-                    if distance < 40 and middle_tip.y > middle_base.y and ring_tip.y > ring_base.y and pinky_tip.y > pinky_base.y:
-                        gesture = "OK Gesture"
-                    elif index_tip_y < middle_tip.y and abs(index_tip_x - middle_tip.x * w) > 40:
-                        gesture = "Peace (Victory Sign)"
-                    else:
-                        gesture = "Two Fingers Extended"
                 elif fingers_extended == 5:
-                    # Detect waving (Hi gesture)
+                    # Detect waving (Hi gesture) and swiping gestures
                     wrist = hand_landmarks.landmark[self.mp_hands.HandLandmark.WRIST]
-                    wrist_x = int(wrist.x * w)
+                    index_tip = hand_landmarks.landmark[self.mp_hands.HandLandmark.INDEX_FINGER_TIP]
 
-                    # Add wrist x-coordinate to buffer
+                    wrist_x = int(wrist.x * w)
+                    index_x = int(index_tip.x * w)
+
+                    # Add wrist x-coordinate to buffer for waving
                     self.wrist_x_buffer.append(wrist_x)
                     if len(self.wrist_x_buffer) > self.buffer_size:
                         self.wrist_x_buffer.pop(0)
 
-                    # Detect oscillation
+                    # Add index x-coordinate to buffer for swiping
+                    self.index_x_buffer.append(index_x)
+                    if len(self.index_x_buffer) > self.buffer_size:
+                        self.index_x_buffer.pop(0)
+
+                    # Detect oscillation for waving
                     if len(self.wrist_x_buffer) == self.buffer_size:
                         movement_range = max(self.wrist_x_buffer) - min(self.wrist_x_buffer)
                         if movement_range > 50:  # Threshold for significant movement
                             gesture = "Hi (Waving)"
                         else:
                             gesture = "Open Hand"
+
+                    # Detect swipe gestures based on index finger movement
+                    if len(self.index_x_buffer) == self.buffer_size:
+                        if self.index_x_buffer[-1] - self.index_x_buffer[0] > 70:  # Significant rightward movement
+                            gesture = "Swipe Right"
+                        elif self.index_x_buffer[0] - self.index_x_buffer[-1] > 70:  # Significant leftward movement
+                            gesture = "Swipe Left"
                 else:
                     gesture = f"{fingers_extended} Fingers Extended"
 
