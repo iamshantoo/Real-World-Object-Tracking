@@ -1,6 +1,8 @@
 import numpy as np
 import mediapipe as mp
 import cv2  # Required for drawing circles and text
+import websocket
+import threading
 
 class GestureTracking:
     def __init__(self):
@@ -16,6 +18,32 @@ class GestureTracking:
         self.index_x_buffer = []  # For swipe detection
         self.wrist_x_buffer = []  # For waving detection
         self.buffer_size = 10  # Number of frames to track
+
+        # WebSocket setup
+        self.ws = websocket.WebSocketApp("ws://localhost:8080/Gesture",  # Replace with your Unity WebSocket server URL
+                                         on_open=self.on_open,
+                                         on_message=self.on_message,
+                                         on_error=self.on_error,
+                                         on_close=self.on_close)
+        self.ws_thread = threading.Thread(target=self.ws.run_forever)
+        self.ws_thread.daemon = True
+        self.ws_thread.start()
+
+    def on_open(self, ws):
+        print("WebSocket connection opened.")
+
+    def on_message(self, ws, message):
+        print(f"Message from Unity: {message}")
+
+    def on_error(self, ws, error):
+        print(f"WebSocket error: {error}")
+
+    def on_close(self, ws, close_status_code, close_msg):
+        print("WebSocket connection closed.")
+
+    def send_gesture_to_unity(self, gesture):
+        if self.ws and self.ws.sock and self.ws.sock.connected:
+            self.ws.send(gesture)
 
     def process_frame(self, frame, results):
         h, w, _ = frame.shape
@@ -141,4 +169,5 @@ class GestureTracking:
                 else:
                     gesture = f"{fingers_extended} Fingers Extended"
 
+        self.send_gesture_to_unity(gesture)
         return frame, hand_state, gesture
