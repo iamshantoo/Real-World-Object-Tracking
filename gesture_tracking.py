@@ -29,6 +29,9 @@ class GestureTracking:
         self.ws_thread.daemon = True
         self.ws_thread.start()
 
+        # Track the last sent gesture
+        self.last_sent_gesture = None
+
     def on_open(self, ws):
         print("WebSocket connection opened.")
 
@@ -43,7 +46,10 @@ class GestureTracking:
 
     def send_gesture_to_unity(self, gesture):
         if self.ws and self.ws.sock and self.ws.sock.connected:
-            self.ws.send(gesture)
+            # Only send the gesture if it is different from the last sent gesture
+            if gesture != self.last_sent_gesture and gesture != "Unknown":
+                self.ws.send(gesture)
+                self.last_sent_gesture = gesture  # Update the last sent gesture
 
     def process_frame(self, frame, results):
         h, w, _ = frame.shape
