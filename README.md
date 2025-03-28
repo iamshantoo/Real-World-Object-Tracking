@@ -133,6 +133,8 @@ public class GestureBehavior : WebSocketBehavior
 
 ```
 
+---
+
 ### 3️⃣ Run Unity
 - Start the Unity project.
 - Ensure the WebSocket server is running and listening on
