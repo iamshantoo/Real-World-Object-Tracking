@@ -122,25 +122,8 @@ class GestureTracking:
                         cv2.putText(frame, name, (tip_x, tip_y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
 
                 # Recognize gestures based on the number of fingers extended
-                if fingers_extended == 0:
-                    gesture = "Fist"
-                elif fingers_extended == 1:
-                    # Detect Like (Thumbs Up) and Dislike (Thumbs Down)
-                    thumb_tip = hand_landmarks.landmark[self.mp_hands.HandLandmark.THUMB_TIP]
-                    thumb_ip = hand_landmarks.landmark[self.mp_hands.HandLandmark.THUMB_IP]
-                    thumb_mcp = hand_landmarks.landmark[self.mp_hands.HandLandmark.THUMB_MCP]
-
-                    thumb_tip_y = int(thumb_tip.y * h)
-                    thumb_ip_y = int(thumb_ip.y * h)
-                    thumb_mcp_y = int(thumb_mcp.y * h)
-
-                    if thumb_tip_y < thumb_ip_y < thumb_mcp_y:  # Thumb pointing up
-                        gesture = "Like (Thumbs Up)"
-                    elif thumb_tip_y > thumb_ip_y > thumb_mcp_y:  # Thumb pointing down
-                        gesture = "Dislike (Thumbs Down)"
-                    else:
-                        gesture = "Pointing"
-                elif fingers_extended == 5:
+                
+                if fingers_extended == 5:
                     # Detect waving (Hi gesture) and swiping gestures
                     wrist = hand_landmarks.landmark[self.mp_hands.HandLandmark.WRIST]
                     index_tip = hand_landmarks.landmark[self.mp_hands.HandLandmark.INDEX_FINGER_TIP]
@@ -158,19 +141,13 @@ class GestureTracking:
                     if len(self.index_x_buffer) > self.buffer_size:
                         self.index_x_buffer.pop(0)
 
-                    # Detect oscillation for waving
-                    if len(self.wrist_x_buffer) == self.buffer_size:
-                        movement_range = max(self.wrist_x_buffer) - min(self.wrist_x_buffer)
-                        if movement_range > 50:  # Threshold for significant movement
-                            gesture = "Hi (Waving)"
-                        else:
-                            gesture = "Open Hand"
+                    
 
                     # Detect swipe gestures based on index finger movement
                     if len(self.index_x_buffer) == self.buffer_size:
-                        if self.index_x_buffer[-1] - self.index_x_buffer[0] > 70:  # Significant rightward movement
+                        if self.index_x_buffer[0] - self.index_x_buffer[-1] > 70:  # Significant rightward movement
                             gesture = "Swipe Right"
-                        elif self.index_x_buffer[0] - self.index_x_buffer[-1] > 70:  # Significant leftward movement
+                        elif self.index_x_buffer[-1] - self.index_x_buffer[0] > 70:  # Significant leftward movement
                             gesture = "Swipe Left"
                 else:
                     gesture = f"{fingers_extended} Fingers Extended"
