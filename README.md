@@ -135,3 +135,14 @@ public class GestureBehavior : WebSocketBehavior
   ```sh
   ws://localhost:8080/Gesture
   ```
+
+---
+
+## ⚙ Dependencies
+The project uses the following Python libraries:
+- **OpenCV**: For video capture and frame processing.
+- **MediaPipe**: For hand tracking and gesture recognition.
+- **PyQt5**: For building the GUI.
+- **websocket-client**: For websocket communication with Unity.
+
+---
