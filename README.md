@@ -85,6 +85,9 @@ To integrate with Unity, follow these steps:
 ### 1️⃣ Install WebSocketSharp in Unity
 - Download the WebSocketSharp library.
 - Add the WebSocketSharp.dll to your Unity project.
+
+---
+
 ### 2️⃣ Create a WebSocket Server in Unity
 Add the following script to a GameObject in Unity to set up a WebSocket server:
 ```sh
@@ -129,6 +132,7 @@ public class GestureBehavior : WebSocketBehavior
 }
 
 ```
+
 ### 3️⃣ Run Unity
 - Start the Unity project.
 - Ensure the WebSocket server is running and listening on
