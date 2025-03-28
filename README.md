@@ -34,35 +34,3 @@ Run the following command in your terminal:
 ```sh
 git clone https://github.com/your-username/Real-World-Object-Tracking.git
 cd Real-World-Object-Tracking
-
-Install Dependencies
-Use pip to install the required Python libraries:
-pip install -r requirements.txt
-
-Run the Application
-Execute the following command to start the Python application:
-python camera_app.py
-
-
-🎮 How to Use
-Launch the application.
-
-The live video feed from your webcam will appear in the GUI.
-
-Perform gestures in front of the camera:
-
-👉 Swipe Left: Move your index finger to the left.
-
-👈 Swipe Right: Move your index finger to the right.
-
-👋 Hi (Waving): Wave your hand left and right.
-
-👍 Like (Thumbs Up): Extend your thumb upward.
-
-👎 Dislike (Thumbs Down): Extend your thumb downward.
-
-✊ Fist: Close your hand into a fist.
-
-✋ Open Hand: Extend all fingers.
-
-The detected gesture and hand state will be displayed on the GUI.
