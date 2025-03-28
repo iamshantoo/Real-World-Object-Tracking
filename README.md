@@ -77,3 +77,61 @@ python camera_app.py
 - The detected gesture and hand state will be displayed on the GUI.
 
 - Unity will receive the gesture data via WebSocket.
+
+---
+
+## Unity Integration
+To integrate with Unity, follow these steps:
+### 1️⃣ Install WebSocketSharp in Unity
+- Download the WebSocketSharp library.
+- Add the WebSocketSharp.dll to your Unity project.
+### 2️⃣ Create a WebSocket Server in Unity
+Add the following script to a GameObject in Unity to set up a WebSocket server:
+```sh
+using System;
+using WebSocketSharp;
+using WebSocketSharp.Server;
+using UnityEngine;
+
+public class GestureWebSocket : MonoBehaviour
+{
+    private WebSocketServer wss;
+
+    void Start()
+    {
+        // Start WebSocket server on port 8080
+        wss = new WebSocketServer("ws://localhost:8080");
+        wss.AddWebSocketService<GestureBehavior>("/Gesture");
+        wss.Start();
+        Debug.Log("WebSocket server started on ws://localhost:8080/Gesture");
+    }
+
+    void OnDestroy()
+    {
+        if (wss != null)
+        {
+            wss.Stop();
+            wss = null;
+        }
+    }
+}
+
+public class GestureBehavior : WebSocketBehavior
+{
+    protected override void OnMessage(MessageEventArgs e)
+    {
+        // Log the received gesture
+        Debug.Log($"Received gesture: {e.Data}");
+
+        // Optionally, send a response back to the client
+        Send($"Gesture {e.Data} received by Unity!");
+    }
+}
+
+```
+### 3️⃣ Run Unity
+- Start the Unity project.
+- Ensure the WebSocket server is running and listening on
+  ```sh
+  ws://localhost:8080/Gesture
+  ```
